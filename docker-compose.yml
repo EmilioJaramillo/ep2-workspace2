@@ -1,0 +1,68 @@
+version: '3.8'
+
+networks:
+  innovatech-network:
+    driver: bridge
+
+volumes:
+  mysql-data:
+    name: innovatech_db_data
+
+services:
+  db-innovatech:
+    image: mysql:8.0
+    container_name: mysql_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: innovatech_db
+      MYSQL_USER: innova_user
+      MYSQL_PASSWORD: innovapassword
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - innovatech-network
+
+  backend-ventas:
+    build: ./ep2-backend-ventas
+    container_name: api_ventas
+    restart: always
+    ports:
+      - "8081:8080"
+    environment:
+      - DB_URL=jdbc:mysql://db-innovatech:3306/innovatech_db
+      - DB_USER=innova_user
+      - DB_PASS=innovapassword
+    depends_on:
+      - db-innovatech
+    networks:
+      - innovatech-network
+
+  backend-despachos:
+    build: ./ep2-backend-despachos
+    container_name: api_despachos
+    restart: always
+    ports:
+      - "8082:8080"
+    environment:
+      - DB_URL=jdbc:mysql://db-innovatech:3306/innovatech_db
+      - DB_USER=innova_user
+      - DB_PASS=innovapassword
+    depends_on:
+      - db-innovatech
+    networks:
+      - innovatech-network
+
+  frontend-app:
+    build: ./ep2-frontend-despacho
+    container_name: web_frontend
+    restart: always
+    ports:
+      - "80:8080"
+    depends_on:
+      - backend-ventas
+      - backend-despachos
+    networks:
+      - innovatech-network
